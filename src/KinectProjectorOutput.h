@@ -6,7 +6,7 @@
 
 #include "ofxCv.h"
 #include "ofMain.h"
-#include "ofxKinectCommonBridge.h"
+#include "ofxKinectV2.h"
 
 using namespace ofxCv;
 using namespace cv;
@@ -15,7 +15,7 @@ class KinectProjectorOutput {
 	public:
 		//setup
 		KinectProjectorOutput();			
-		void setup(ofxKinectCommonBridge* _kinect, int _projectorResolutionX, int _projectorResolutionY);
+		void setup(ofxKinectV2* _kinect, int _projectorResolutionX, int _projectorResolutionY);
 		
 		//project functions
 		vector<ofPolyline> projectFromDepthXY(const vector<ofPolyline> p);
@@ -50,7 +50,7 @@ class KinectProjectorOutput {
 
 	protected:
 		//other
-		ofxKinectCommonBridge* kinect;
+		ofxKinectV2* kinect;
 		bool				isReady;
 
 		//calibrationResults

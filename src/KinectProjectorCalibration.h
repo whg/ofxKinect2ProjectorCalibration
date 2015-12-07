@@ -8,7 +8,7 @@
 #include "ofxOpenCv.h"
 #include "ofMain.h"
 #include "Chessboard.h"
-#include "ofxKinectCommonBridge.h"
+#include "ofxKinectV2.h"
 
 using namespace ofxCv;
 using namespace cv;
@@ -17,7 +17,7 @@ class KinectProjectorCalibration {
 	public:
 		//setup
 		KinectProjectorCalibration();			
-		void setup(ofxKinectCommonBridge* _kinect, int _projectorResolutionX, int _projectorResolutionY, string savename);
+		void setup(ofxKinectV2* _kinect, int _projectorResolutionX, int _projectorResolutionY, string savename);
 		string savename;
 
 		//some public parameters
@@ -65,9 +65,9 @@ class KinectProjectorCalibration {
 		int getOffsetX();
 		int getOffsetY();
 		
-		ofxKinectCommonBridge* kinect;
+		ofxKinectV2* kinect;
 
-	protected:
+	public:
 		//settings
 		int					projectorResolutionX;
 		int					projectorResolutionY;
@@ -85,7 +85,7 @@ class KinectProjectorCalibration {
 		//other
 		Chessboard			chessboard;
 		bool				isReady;
-		ofxCvColorImage		kinectColorImage;
+        ofxCvColorImage		kinectColorImage;
 		int					chessboardBlocksX;
 		int					chessboardBlocksY;
 		bool				chessboardFound;

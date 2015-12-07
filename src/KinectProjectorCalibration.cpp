@@ -38,7 +38,7 @@ KinectProjectorCalibration::KinectProjectorCalibration() {
 }
 
 
-void	KinectProjectorCalibration::setup(ofxKinectCommonBridge* _kinect, int _projectorResolutionX, int _projectorResolutionY, string _savename) {
+void	KinectProjectorCalibration::setup(ofxKinectV2* _kinect, int _projectorResolutionX, int _projectorResolutionY, string _savename) {
 	kinect = _kinect;
 	projectorResolutionX = _projectorResolutionX;
 	projectorResolutionY = _projectorResolutionY;
@@ -53,16 +53,17 @@ void KinectProjectorCalibration::resetTimer() {
 float	KinectProjectorCalibration::doFastCheck(){
 	if (!isReady) return -1;
 
-	ofxCvColorImage colorImg;
-	colorImg.setFromPixels(kinect->getCalibratedColorPixelsRef());
-//	colorImg.resize(colorImg.width*fastCheckResize,colorImg.height * fastCheckResize);
+    //ofPixels pix = kinect->getRegisteredPixels();
+    //pix.setImageType(OF_IMAGE_COLOR);
+	colorImg.setFromPixels(kinect->getRegisteredPixels());
+//	colorImg.resize(c.width*fastCheckResize,colorImg.height * fastCheckResize);
 	Mat colorImage = toCv(colorImg);
 	pointBufFastCheck.clear();
 	
 	vector<Point2f> pointBuf;
 	//setup for finding chessboards
 	cv::Size patternSize = cv::Size(chessboardBlocksX, chessboardBlocksY);
-	int flags = CV_CALIB_CB_FAST_CHECK;
+    int flags = 0; // CV_CALIB_CB_FAST_CHECK;
 	if(b_CV_CALIB_CB_ADAPTIVE_THRESH) flags += CV_CALIB_CB_ADAPTIVE_THRESH; 
 	if(b_CV_CALIB_CB_NORMALIZE_IMAGE) flags += CV_CALIB_CB_NORMALIZE_IMAGE;  
 	
@@ -91,7 +92,11 @@ bool	KinectProjectorCalibration::addCurrentFrame(){
 	if (!isReady) return false;
 	
 	//gets the DEPTH/RGB CALIBRATED color image
-	kinectColorImage.setFromPixels(kinect->getCalibratedColorPixelsRef());
+	// note: not colorImages, now 1 channel 
+    //static ofpixels pix;
+    //pix = kinect->getregisteredpixels();
+    //pix.setimagetype(of_image_color);
+	kinectColorImage.setFromPixels(kinect->getRegisteredPixels());
 	Mat colorImage = toCv(kinectColorImage);
 	
 	//setup for finding chessboards

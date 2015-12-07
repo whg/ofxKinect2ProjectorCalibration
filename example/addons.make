@@ -1,11 +1,7 @@
-ofxOpenCv
-ofxOsc
-ofxXmlSettings
 ofxCv
-ofxFilterLibrary
-ofxFlowTools
 ofxKinect2ProjectorCalibration
 ofxKinectV2
+ofxOpenCv
 ofxSecondWindow
-ofxSpout
 ofxUI
+ofxXmlSettings
