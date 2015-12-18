@@ -8,7 +8,7 @@
 #include "ofxOpenCv.h"
 #include "ofMain.h"
 #include "Chessboard.h"
-#include "ofxKinectCommonBridge.h"
+#include "Kinect2Bridge.h"
 
 using namespace ofxCv;
 using namespace cv;
@@ -17,7 +17,7 @@ class KinectProjectorCalibration {
 	public:
 		//setup
 		KinectProjectorCalibration();			
-		void setup(ofxKinectCommonBridge* _kinect, int _projectorResolutionX, int _projectorResolutionY, string savename);
+		void setup(Kinectv2* _kinect, int _projectorResolutionX, int _projectorResolutionY, string savename);
 		string savename;
 
 		//some public parameters
@@ -39,7 +39,7 @@ class KinectProjectorCalibration {
 
 		//fast checking
 		float			doFastCheck();		//does a fast check on resized frame
-		vector<ofVec2f> getFastCheckResults();
+		vector<ofVec2f>& getFastCheckResults();
 		void resetTimer();
 
 		//enable/disable calibraiton and adding images
@@ -65,7 +65,7 @@ class KinectProjectorCalibration {
 		int getOffsetX();
 		int getOffsetY();
 		
-		ofxKinectCommonBridge* kinect;
+		Kinectv2* kinect;
 
 	protected:
 		//settings

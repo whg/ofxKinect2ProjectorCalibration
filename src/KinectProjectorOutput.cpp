@@ -17,7 +17,7 @@ KinectProjectorOutput::KinectProjectorOutput() {
 }
 
 
-void	KinectProjectorOutput::setup(ofxKinectCommonBridge* _kinect, int _projectorResolutionX, int _projectorResolutionY) {
+void	KinectProjectorOutput::setup(Kinectv2* _kinect, int _projectorResolutionX, int _projectorResolutionY) {
 	kinect = _kinect;
 	projectorResolutionX = _projectorResolutionX;
 	projectorResolutionY = _projectorResolutionY;

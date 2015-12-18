@@ -7,7 +7,7 @@
 #include "ofxOpenCv.h"
 
 //kinect backend
-#include "ofxKinectCommonBridge.h"
+#include "Kinect2Bridge.h"
 #include "KinectProjectorCalibration.h"
 #include "KinectProjectorOutput.h"
 
@@ -44,7 +44,7 @@ private:
 		Mode						mode;
 		
 		//kinect & the wrapper
-		ofxKinectCommonBridge		kinect;
+		Kinectv2		kinect;
 		KinectProjectorCalibration	kinectProjectorCalibration;
 		KinectProjectorOutput		kinectProjectorOutput;
 		bool						kinectReady;
@@ -70,5 +70,5 @@ private:
 		ofxSecondWindow				secondWindow;
 		int							offsetX, offsetY;
 		ofPixels					dstColorPixels;
-		ofxCvColorImage				calibeatedColor;
+		ofImage						calibeatedColor;
 };

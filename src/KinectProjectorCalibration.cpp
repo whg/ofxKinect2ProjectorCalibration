@@ -38,7 +38,7 @@ KinectProjectorCalibration::KinectProjectorCalibration() {
 }
 
 
-void	KinectProjectorCalibration::setup(ofxKinectCommonBridge* _kinect, int _projectorResolutionX, int _projectorResolutionY, string _savename) {
+void	KinectProjectorCalibration::setup(Kinectv2* _kinect, int _projectorResolutionX, int _projectorResolutionY, string _savename) {
 	kinect = _kinect;
 	projectorResolutionX = _projectorResolutionX;
 	projectorResolutionY = _projectorResolutionY;
@@ -53,7 +53,6 @@ void KinectProjectorCalibration::resetTimer() {
 float	KinectProjectorCalibration::doFastCheck(){
 	if (!isReady) return -1;
 
-	ofxCvColorImage colorImg;
 	colorImg.setFromPixels(kinect->getCalibratedColorPixelsRef());
 //	colorImg.resize(colorImg.width*fastCheckResize,colorImg.height * fastCheckResize);
 	Mat colorImage = toCv(colorImg);
@@ -62,7 +61,7 @@ float	KinectProjectorCalibration::doFastCheck(){
 	vector<Point2f> pointBuf;
 	//setup for finding chessboards
 	cv::Size patternSize = cv::Size(chessboardBlocksX, chessboardBlocksY);
-	int flags = CV_CALIB_CB_FAST_CHECK;
+	int flags = 0; // CV_CALIB_CB_FAST_CHECK;
 	if(b_CV_CALIB_CB_ADAPTIVE_THRESH) flags += CV_CALIB_CB_ADAPTIVE_THRESH; 
 	if(b_CV_CALIB_CB_NORMALIZE_IMAGE) flags += CV_CALIB_CB_NORMALIZE_IMAGE;  
 	
@@ -83,7 +82,7 @@ float	KinectProjectorCalibration::doFastCheck(){
 	}
 
 }
-vector<ofVec2f> KinectProjectorCalibration::getFastCheckResults() {
+vector<ofVec2f>& KinectProjectorCalibration::getFastCheckResults() {
 	return pointBufFastCheck;
 }
 
@@ -126,12 +125,12 @@ bool	KinectProjectorCalibration::addCurrentFrame(){
 			ofVec2f kinectCoords = ofVec2f((int)pointBuf[i].x, (int)pointBuf[i].y);
 			ofVec3f worldCoords = kinect->mapDepthPointToWorldPoint(kinectCoords);
 
-			cout << "Found point: " << pointBuf[i].x << " , " << pointBuf[i].y << " \tmapped to " << worldCoords.x << ", " << worldCoords.y << ", " << worldCoords.z << endl;
+			if( i == 0) cout << "Found point: " << pointBuf[i].x << " , " << pointBuf[i].y << " \tmapped to " << worldCoords.x << ", " << worldCoords.y << ", " << worldCoords.z << endl;
 
 			cv::Point2f kinectCV = toCv(kinectCoords);
 			cv::Point3f worldCV = toCv(worldCoords);
 			if (worldCV.x < -10 || worldCV.x > 10 ||worldCV.y < -10 || worldCV.y > 10 ||worldCV.z < -10 || worldCV.z > 10 ){
-				cout << "invalid point!" << endl;
+				//cout << "invalid point!" << endl;
 				valid = false;
 			}
 			worldCoordinatesChessboard.push_back(worldCV);
@@ -227,15 +226,15 @@ bool	KinectProjectorCalibration::calibrate()
 	}
 	
 	//debug output
-	cout << " " << endl;
-	cout << " " << endl;
-	cout << "RMS: " << reprojError << endl;	
-	cout << "Camera matrix" << endl;	
-	cout << cameraMatrix << endl;
-	cout << "Dist coeffs" << endl;
-	cout << distCoeffs << endl;
-	cout << "Principal point: " << intrinsics.getPrincipalPoint() << endl;	
-	cout << "Reprojection Error " << reprojError << endl;
+	//cout << " " << endl;
+	//cout << " " << endl;
+	//cout << "RMS: " << reprojError << endl;	
+	//cout << "Camera matrix" << endl;	
+	//cout << cameraMatrix << endl;
+	//cout << "Dist coeffs" << endl;
+	//cout << distCoeffs << endl;
+	//cout << "Principal point: " << intrinsics.getPrincipalPoint() << endl;	
+	//cout << "Reprojection Error " << reprojError << endl;
 
 	//save
 	save(savename,true);

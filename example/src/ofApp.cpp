@@ -7,16 +7,12 @@ using namespace cv;
 void ofApp::setup() {	
 	SAVENAME = "calibration.yml";
 
-	kinect.initSensor();
-	kinect.initColorStream();
-	kinect.initDepthStream();
-	kinect.initBodyIndexStream();
-	//kinect.initSkeletonStream();
-	//kinect.initIRStream();
-	kinect.initCalibratedStream();
-	kinect.initWorldStream();
-	kinect.setDepthClipping(500,8000);
-	kinect.start();
+	kinect.open();
+	kinect.initDepthSource();
+	kinect.initColorSource();
+	kinect.initInfraredSource();
+	kinect.initBodySource();
+	kinect.initBodyIndexSource();
 
 	
 	ofSetLogLevel(OF_LOG_NOTICE);  
@@ -25,7 +21,6 @@ void ofApp::setup() {
 
 	
 	loadSettings();
-	ofSetFrameRate(30);
 	ofSetWindowTitle("KinectV2 Projector Calibration");	
 	mode				 = PREVIEW;
 	
@@ -50,7 +45,7 @@ void ofApp::update() {
 	}
 	long now = ofGetElapsedTimeMillis();
 	kinect.update();
-	cout << "update: " << (ofGetElapsedTimeMillis() - now) << endl;
+	//cout << "update: " << (ofGetElapsedTimeMillis() - now) << endl;
 	
 	if (mode == PREVIEW) {
 		secondWindow.begin();
@@ -132,11 +127,29 @@ void ofApp::update() {
 			secondWindow.end(); 
 		} else {
 			string info = "[Captures: " + ofToString(kinectProjectorCalibration.getDatabaseSize()) + "; repr: " + ofToString(kinectProjectorCalibration.getReprojectionError(), 2) + "]";
-		
-			gray.setFromPixels(kinect.getBodyIndexPixelsRef());
-			gray.invert();
-			contourFinder.findContours(gray, 1000, 480*400, 1, false, false);
+			
+			auto depthPix = kinect.getDepthSource()->getDepthToWorldMap();
+			//depthPix.setImageType(OF_IMAGE_GRAYSCALE);
+			const int d = depthPix.getWidth() * depthPix.getHeight();
+			auto *pix = depthPix.getData();
+			unsigned char *outPix = new unsigned char[d];
+			for (int i = 0; i < d; i++) {
+				//if (pix[i*3] < 1000) pix[i] = 0;
+				//else pix[i] = 255;
+				auto v = pix[i * 3 + 2];
+				if (v < 1.5 && v > 0) {
+					outPix[i] = v * 180;
+				}
+				else outPix[i] = 0;
+				//outPix[i] = v < 255 ? v * 0.1 : 0; // 255 - pix[i * 3 + 2];
+			}
+			gray.setFromPixels(outPix, depthPix.getWidth(), depthPix.getHeight());
+			delete[] outPix;
+			//gray.invert();
+			contourFinder.findContours(gray, 20, 480*4000, 3, false, false);
 	
+			assert(calibeatedColor.getWidth() == depthPix.getWidth());
+
 			secondWindow.begin();
 				ofClear(0);
 				drawBorder(ofColor(50,0,0), "TEST MODE. " + info);
@@ -162,9 +175,9 @@ void ofApp::update() {
 
 					//p.draw();			
 					ofSetColor(255,255,255);
-					p = p.getSmoothed(3);
-					p.simplify();
-					p = p.getSmoothed(3);
+					//p = p.getSmoothed(3);
+					//p.simplify();
+					//p = p.getSmoothed(3);
 					ofSetLineWidth(5);
 					p.draw();		
 					ofSetLineWidth(3);
@@ -179,7 +192,10 @@ void ofApp::update() {
 
 
 void ofApp::draw() {	
-	calibeatedColor.setFromPixels(kinect.getCalibratedColorPixelsRef());
+	auto &pix = kinect.getCalibratedColorPixelsRef();
+	if (pix.getWidth() == 0) return;
+
+	calibeatedColor.setFromPixels(pix);
 
 	ofSetWindowTitle("FR: " + ofToString(ofGetFrameRate()));
 	ofClear(0);
@@ -194,15 +210,19 @@ void ofApp::draw() {
 		calibeatedColor.draw(0,0,512,424);
 		ofDrawBitmapString("Kinect RGB Preview", 0,-5);
 		
-		kinect.getDepth().draw(0,530,512,424);
+		auto &depthPix = kinect.getDepthSource()->getDepthToWorldMap();
+		ofImage img;
+		img.setFromPixels(depthPix);
+		img.draw(0, 530, 512, 424);
+		//kinect.getDepthSource()->draw(0, 530, 512, 424);
 		ofDrawBitmapString("Kinect Depth Preview", 0,515);
 
 		
-		kinect.getBodyIndex().draw(650,0,512,424);
+		//kinect.getBodyIndex().draw(650,0,512,424);
 		ofDrawBitmapString("Kinect Label Preview", 650,-5);
 
 		//ofScale(1.0/.75,1.0/0.75);
-		if (ofGetMousePressed()) {
+		/*if (ofGetMousePressed()) {
 			int x = ofGetMouseX() - 400;
 			int y = ofGetMouseY() - 20;
 			ofVec3f p = kinect.mapDepthPointToWorldPoint(ofPoint(x,y));
@@ -210,7 +230,7 @@ void ofApp::draw() {
 			ofDrawBitmapStringHighlight(ofToString(x) + ", " + ofToString (y) + " --> " + ofToString(p.x,2) + ", " + ofToString(p.y,2) + ", " + ofToString(p.z,2), x,y);
 			ofSetColor(255);
 			cout << ofToString(x) + ", " + ofToString (y) + " --> " + ofToString(p.x,2) + ", " + ofToString(p.y,2) + ", " + ofToString(p.z,2) << endl;
-		}
+		}*/
 	}
 
 	if (mode == CALIBRATION) {
@@ -219,7 +239,7 @@ void ofApp::draw() {
 		calibeatedColor.draw(0,0,512,424);
 		ofDrawBitmapString("Kinect Input",0,20);
 
-		vector<ofVec2f> pts = kinectProjectorCalibration.getFastCheckResults();
+		vector<ofVec2f> &pts = kinectProjectorCalibration.getFastCheckResults();
 		for (int i = 0; i < pts.size(); i++) {
 			ofSetColor(0,255,0);
 			ofFill();
@@ -250,9 +270,15 @@ void ofApp::draw() {
 			ofDrawBitmapString("To test, stand between 1 and 4 meters from the kinect.",0,40);
 			ofDrawBitmapString("There should be a line projected around you at any given distance.",0,60);
 						
-			calibeatedColor.draw(0,200,512,424);
+
+			/*auto depthPix = kinect.getDepthSource()->getDepthToWorldMap();
+			ofImage depthImage;
+			depthImage.setFromPixels(depthPix);
+			depthImage.draw(0, 200+1080/4, 1920 / 4, 1080 / 4);*/
+			gray.draw(0,200,1920/4,1080/4);
 			ofDrawBitmapString("Kinect RGB Preview", 0,90);
 			
+
 		//gray.draw(650,0,512,424);
 		ofTranslate(650,0);
 		contourFinder.draw();
@@ -271,6 +297,7 @@ void ofApp::draw() {
 
 			if (xP > 0 && xP < 512 && yP >0 && yP < 424) {
 				ofPoint sp = kinect.mapDepthPointToWorldPoint(ofPoint(xP, yP));
+
 				ofDrawBitmapString("X: " + ofToString(sp.x,2) + "\nY: " + ofToString(sp.y,2) + "\nZ: " + ofToString(sp.z,2), xP  ,yP+20+200);
 			}
 
@@ -280,6 +307,7 @@ void ofApp::draw() {
 
 	ofTranslate(-400,-20);
 	gui->draw();
+	secondWindow.show();
 }
 
 
@@ -333,8 +361,8 @@ void ofApp::loadSettings() {
 		ofLogError("Settings file settings.xml not found. Loading default values.");
 		save = true;
 	}
-	projectorWidth	= xmlReader.getValue("Projector:Width", 1024);
-	projectorHeight	= xmlReader.getValue("Projector:Height", 768);
+	projectorWidth	= xmlReader.getValue("Projector:Width", 1280);
+	projectorHeight	= xmlReader.getValue("Projector:Height", 800); 
 	
 	if (save)	
 		xmlReader.saveFile();
